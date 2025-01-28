@@ -747,6 +747,15 @@ install_standalone() {
     fi
   fi
 
+  if expr "${OPENTOFU_VERSION}" : '\d\+\.\d\+$' > /dev/null 2>&1; then
+    log_info "Determining latest OpenTofu ${OPENTOFU_VERSION} patch version..."
+    OPENTOFU_VERSION=$(download_file "https://api.github.com/repos/opentofu/opentofu/releases" - | grep "tag_name.*${OPENTOFU_VERSION}\.\d\+\"," | head -1 | sed -e 's/.*tag_name":"v//' -e 's/.*tag_name": "v//' -e 's/".*//')
+    if [ -z "${OPENTOFU_VERSION}" ]; then
+      log_error "Failed to obtain the latest release from the GitHub API. Try passing --opentofu-version to specify a version."
+      return "${TOFU_INSTALL_EXIT_CODE_INSTALL_FAILED}"
+    fi
+  fi
+
   OS="$(uname | tr '[:upper:]' '[:lower:]')"
   ARCH="$(uname -m | sed -e 's/aarch64/arm64/' -e 's/x86_64/amd64/')"
   if [ -z "${OS}" ]; then
